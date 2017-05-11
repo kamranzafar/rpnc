@@ -1,7 +1,4 @@
-package org.kamranzafar.rpnc.impl;
-
-import org.apache.commons.lang3.StringUtils;
-import org.kamranzafar.rpnc.*;
+package org.kamranzafar.rpnc;
 
 import java.math.BigDecimal;
 import java.util.Stack;
@@ -10,20 +7,20 @@ import java.util.StringTokenizer;
 /**
  * Created by kamran on 11/05/17.
  */
-public class RpnCalculator implements Calculator {
+public class RpnCalculator {
     private static int DEFAULT_PRECISION = 15;
 
     private Stack<Double> valueStack = new Stack<>();
-    // keeps track of all operations for 'undo'
-    private Stack<MathOperation> operationStack = new Stack<>();
+    // keeps track of all operations for 'undo' operation
+    private Stack<OperationInput> operationStack = new Stack<>();
 
     private int precision;
     private int tokenIndex;
 
-    class MathOperation {
+    class OperationInput {
         private Stack<Double> operands = new Stack<>();
 
-        MathOperation(Double... operands) {
+        OperationInput(Double... operands) {
             for (Double d : operands) {
                 this.operands.push(d);
             }
@@ -49,14 +46,14 @@ public class RpnCalculator implements Calculator {
             try {
                 Double value = Double.parseDouble(token);
                 valueStack.push(value);
-                operationStack.push(new MathOperation());
+                operationStack.push(new OperationInput());
 
                 return;
             } catch (Throwable e) {
-                throw new CalculatorException("Invalid token", e);
+                throw new InvalidTokenException(token, tokenIndex);
             }
         } else if (valueStack.size() < operation.operands()) {
-            throw new InsufficientParametersException(operation.operator(), tokenIndex);
+            throw new InsufficientParametersException(token, tokenIndex);
         }
 
         switch (operation) {
@@ -76,22 +73,10 @@ public class RpnCalculator implements Calculator {
                 calculate(valueStack.pop(), Math::sqrt);
                 break;
             case UNDO:
-                if (!valueStack.isEmpty()) {
-                    valueStack.pop();
-                }
-
-                if (!operationStack.empty()) {
-                    MathOperation mathOperation = operationStack.pop();
-
-                    while (!mathOperation.getOperands().empty()) {
-                        valueStack.push(mathOperation.getOperands().pop());
-                    }
-                }
-
+                undoLastOperation();
                 break;
             case CLEAR:
-                valueStack.clear();
-                operationStack.clear();
+                clearStacks();
                 break;
         }
     }
@@ -100,7 +85,7 @@ public class RpnCalculator implements Calculator {
         Double res = BigDecimal.valueOf(binaryOperation.process(operand1, operand2))
                 .setScale(precision, BigDecimal.ROUND_HALF_UP).doubleValue();
 
-        operationStack.push(new MathOperation(operand1, operand2));
+        operationStack.push(new OperationInput(operand1, operand2));
         valueStack.push(res);
     }
 
@@ -108,15 +93,30 @@ public class RpnCalculator implements Calculator {
         Double res = BigDecimal.valueOf(unaryOperation.process(operand))
                 .setScale(precision, BigDecimal.ROUND_HALF_UP).doubleValue();
 
-        operationStack.push(new MathOperation(operand));
+        operationStack.push(new OperationInput(operand));
         valueStack.push(res);
     }
 
-    public void evaluate(String input) {
-        if (StringUtils.isBlank(input)) {
-            throw new CalculatorException("");
+    private void clearStacks() {
+        valueStack.clear();
+        operationStack.clear();
+    }
+
+    private void undoLastOperation() {
+        if (!valueStack.isEmpty()) {
+            valueStack.pop();
         }
 
+        if (!operationStack.empty()) {
+            OperationInput operationInput = operationStack.pop();
+
+            while (!operationInput.getOperands().empty()) {
+                valueStack.push(operationInput.getOperands().pop());
+            }
+        }
+    }
+
+    public void evaluate(String input) {
         StringTokenizer tokenizer = new StringTokenizer(input);
 
         tokenIndex = 0;

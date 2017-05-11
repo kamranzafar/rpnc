@@ -1,6 +1,6 @@
 package org.kamranzafar.rpnc;
 
-import org.kamranzafar.rpnc.impl.RpnCalculator;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Console;
 import java.text.DecimalFormat;
@@ -18,8 +18,17 @@ public class Main {
             System.exit(1);
         }
 
+        System.out.println("RPNC (Reverse Polish Notation Calculator)");
+        System.out.println("by Kamran Zafar\n");
+        System.out.println("In order to exit either enter 'exit' or press ctrl+c\n");
+        System.out.flush();
+
         while (true) {
             String line = console.readLine();
+
+            if (StringUtils.isBlank(line)) {
+                continue;
+            }
 
             if (line.equalsIgnoreCase("exit")) {
                 break;
@@ -30,8 +39,9 @@ public class Main {
             } catch (InsufficientParametersException e) {
                 System.err.println(String.format("operator %s (position: %d): insufficient parameters",
                         e.getOperator(), e.getIndex()));
-            } catch (CalculatorException e) {
-                System.err.println(e.getMessage());
+            } catch (InvalidTokenException e) {
+                System.err.println(String.format("invalid token %s (position: %d)",
+                        e.getOperator(), e.getIndex()));
             }
 
             DecimalFormat decimalFormat = new DecimalFormat("0.##########");

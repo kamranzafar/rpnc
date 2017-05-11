@@ -4,41 +4,40 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.kamranzafar.rpnc.impl.RpnCalculator;
 
 /**
  * Created by kamran on 11/05/17.
  */
 @RunWith(JUnit4.class)
 public class RpnCalculatorTest {
-    @Test(expected = CalculatorException.class)
-    public void evaluateInvalidInput(){
+    @Test(expected = InvalidTokenException.class)
+    public void evaluateInvalidInput() {
         RpnCalculator calculator = new RpnCalculator();
         calculator.evaluate("1 2 3 )");
     }
 
     @Test(expected = InsufficientParametersException.class)
-    public void evaluateInsufficientParameters(){
+    public void evaluateInsufficientParameters() {
         //Example 8
         RpnCalculator calculator = new RpnCalculator();
         calculator.evaluate("1 2 3 * 5 + * * 6 5");
     }
 
     @Test
-    public void evaluateInsufficientParametersCheckStack(){
+    public void evaluateInsufficientParametersCheckStack() {
         //Example 8
         RpnCalculator calculator = new RpnCalculator();
 
         try {
             calculator.evaluate("1 2 3 * 5 + * * 6 5");
-        }catch (InsufficientParametersException e){
+        } catch (InsufficientParametersException e) {
             Assert.assertEquals(calculator.getValueStack().get(0), new Double(11));
             Assert.assertEquals(calculator.getValueStack().size(), 1);
         }
     }
 
     @Test
-    public void evaluate(){
+    public void evaluate() {
         RpnCalculator calculator = new RpnCalculator();
 
         //Example 1
